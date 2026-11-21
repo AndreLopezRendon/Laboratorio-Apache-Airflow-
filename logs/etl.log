@@ -1,0 +1,19 @@
+2026-11-21 12:21:45,697 - INFO - =============================================
+2026-11-21 12:21:45,697 - INFO - Inicio ejecución Green Data ETL
+2026-11-21 12:21:45,697 - INFO - =============================================
+2026-11-21 12:21:45,697 - INFO - Inicio capa Bronze
+2026-11-21 12:21:46,133 - INFO - Archivo energy_raw.csv generado correctamente
+2026-11-21 12:21:46,133 - INFO - Capa Bronze completada correctamente
+2026-11-21 12:21:46,133 - INFO - Inicio capa Silver
+2026-11-21 12:21:46,152 - INFO - Capa Silver completada correctamente
+2026-11-21 12:21:46,152 - INFO - Inicio capa Gold
+2026-11-21 12:21:46,164 - INFO - Capa Gold completada correctamente
+2026-11-21 12:21:46,164 - INFO - Validación exitosa: data/bronze/countries_raw.csv
+2026-11-21 12:21:46,164 - INFO - Validación exitosa: data/bronze/energy_raw.csv
+2026-11-21 12:21:46,164 - INFO - Validación exitosa: data/silver/silver_green_data.csv
+2026-11-21 12:21:46,164 - INFO - Validación exitosa: data/gold/gold_final.csv
+2026-11-21 12:21:46,166 - INFO - Validación exitosa: reports/kpis.csv
+2026-11-21 12:21:46,166 - INFO - Validación exitosa: warehouse/green_data_warehouse.csv
+2026-11-21 12:21:46,180 - INFO - Dataset GOLD generado con dimensión (5, 11)
+2026-11-21 12:21:46,180 - INFO - Resumen de KPIs generado correctamente
+2026-11-21 12:21:46,180 - INFO - Pipeline ejecutado correctamente

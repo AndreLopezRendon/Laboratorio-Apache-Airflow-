@@ -1,0 +1,6 @@
+Country,Country_Code,Capital_City,Region,Income_Level,Longitude,Latitude,Energy_Consumption,Renewable_Energy,Emission_Efficiency,Environmental_Status
+Brazil,BRA,Brasilia,Latin America & Caribbean ,Upper middle income,-47.9292,-15.7801,500,45,10.869565217391305,Moderate
+Colombia,COL,Bogota,Latin America & Caribbean ,Upper middle income,-74.082,4.60987,250,35,6.944444444444445,Critical
+Germany,DEU,Berlin,Europe & Central Asia,High income,13.4115,52.5235,700,38,17.94871794871795,Moderate
+India,IND,New Delhi,South Asia,Lower middle income,77.225,28.6353,900,18,47.36842105263158,Green
+United States,USA,Washington D.C.,North America,High income,-77.032,38.8895,1200,20,57.142857142857146,Green
