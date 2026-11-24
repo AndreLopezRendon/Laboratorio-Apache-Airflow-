@@ -1,154 +1,46 @@
-"""
-Silver Layer Transformation
-
-Proyecto: Green Data ETL
-Autor: Andrés
-Python: 3.12
-
-Responsabilidades:
-- Leer archivos Bronze
-- Limpiar datos
-- Estandarizar formatos
-- Realizar integración (JOIN)
-- Generar Silver Dataset
-"""
-
-from pathlib import Path
+"""Capa Silver: limpieza, estandarización e integración por código ISO."""
 
 import pandas as pd
 
+from src.config import bronze_dir, silver_dir
 
-BRONZE_COUNTRIES = "data/bronze/countries_raw.csv"
-BRONZE_ENERGY = "data/bronze/energy_raw.csv"
-
-SILVER_OUTPUT = "data/silver/silver_green_data.csv"
+TEXT_COLUMNS = ["Country", "Country_Code", "Capital_City", "Region", "Income_Level"]
 
 
-def transform_to_silver() -> pd.DataFrame:
-    """
-    Construye la capa Silver.
-    """
+def _strip_text(df: pd.DataFrame) -> pd.DataFrame:
+    for col in TEXT_COLUMNS:
+        if col in df.columns:
+            df[col] = df[col].astype("string").str.strip()
+    return df
 
-    print("Iniciando transformación Silver...")
 
-    countries = pd.read_csv(BRONZE_COUNTRIES)
-    energy = pd.read_csv(BRONZE_ENERGY)
+def transform_to_silver(base_dir=None) -> pd.DataFrame:
+    countries = pd.read_csv(bronze_dir(base_dir) / "countries_raw.csv")
+    energy = pd.read_csv(bronze_dir(base_dir) / "energy_raw.csv")
 
-    print(f"Countries: {countries.shape}")
-    print(f"Energy: {energy.shape}")
+    countries = _strip_text(countries.drop_duplicates())
+    energy = _strip_text(energy.drop_duplicates())
 
-    # ==========================
-    # ELIMINAR DUPLICADOS
-    # ==========================
+    # Los agregados del World Bank (World, regiones, grupos de ingreso) no son países.
+    countries = countries[countries["Region"] != "Aggregates"]
+    countries["Income_Level"] = countries["Income_Level"].fillna("Unknown")
 
-    countries = countries.drop_duplicates()
+    # Valor no numérico => faltante (NaN); no se inventa un 0.
+    for col in ["Energy_Consumption", "Renewable_Energy"]:
+        energy[col] = pd.to_numeric(energy[col], errors="coerce")
 
-    energy = energy.drop_duplicates()
+    # El nombre de país difiere entre fuentes; se une por código ISO.
+    energy = energy.drop(columns=["Country"])
+    silver = pd.merge(countries, energy, on="Country_Code", how="inner")
 
-    # ==========================
-    # TRATAMIENTO DE NULOS
-    # ==========================
+    silver = silver.dropna(axis=1, how="all").sort_values(by="Country")
 
-    countries["Region"] = (
-        countries["Region"]
-        .fillna("Unknown")
-    )
-
-    countries["Income_Level"] = (
-        countries["Income_Level"]
-        .fillna("Unknown")
-    )
-
-    energy["Energy_Consumption"] = (
-        pd.to_numeric(
-            energy["Energy_Consumption"],
-            errors="coerce"
-        )
-        .fillna(0)
-    )
-
-    energy["Renewable_Energy"] = (
-        pd.to_numeric(
-            energy["Renewable_Energy"],
-            errors="coerce"
-        )
-        .fillna(0)
-    )
-
-    # ==========================
-    # NORMALIZACIÓN DE STRINGS
-    # ==========================
-
-    countries["Country"] = (
-        countries["Country"]
-        .astype(str)
-        .str.strip()
-    )
-
-    energy["Country"] = (
-        energy["Country"]
-        .astype(str)
-        .str.strip()
-    )
-
-    # ==========================
-    # JOIN
-    # ==========================
-
-    silver = pd.merge(
-        countries,
-        energy,
-        on="Country",
-        how="inner"
-    )
-
-    # ==========================
-    # ELIMINAR COLUMNAS VACÍAS
-    # ==========================
-
-    silver = silver.dropna(
-        axis=1,
-        how="all"
-    )
-
-    # ==========================
-    # ORDENAR DATOS
-    # ==========================
-
-    silver = silver.sort_values(
-        by="Country"
-    )
-
-    # ==========================
-    # CREAR DIRECTORIO
-    # ==========================
-
-    Path(
-        "data/silver"
-    ).mkdir(
-        parents=True,
-        exist_ok=True
-    )
-
-    # ==========================
-    # GUARDAR RESULTADO
-    # ==========================
-
-    silver.to_csv(
-        SILVER_OUTPUT,
-        index=False
-    )
-
-    print(
-        f"Silver generado correctamente: "
-        f"{silver.shape}"
-    )
+    out_dir = silver_dir(base_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    silver.to_csv(out_dir / "silver_green_data.csv", index=False)
 
     return silver
 
 
 if __name__ == "__main__":
-
-    df_silver = transform_to_silver()
-
-    print(df_silver.head())
+    print(transform_to_silver().head())

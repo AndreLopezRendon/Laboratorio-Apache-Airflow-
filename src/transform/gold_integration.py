@@ -12,96 +12,45 @@ Responsabilidades:
 - Simular Data Warehouse
 """
 
-from pathlib import Path
-
+import numpy as np
 import pandas as pd
 
-
-SILVER_FILE = "data/silver/silver_green_data.csv"
-
-GOLD_FILE = "data/gold/gold_final.csv"
-
-KPI_FILE = "reports/kpis.csv"
-
-WAREHOUSE_FILE = (
-    "warehouse/green_data_warehouse.csv"
-)
-
+from src.config import gold_dir, reports_dir, silver_dir
 
 def classify_environment(score: float) -> str:
+    """Clasifica por proporción de energía renovable (más renovable = mejor)."""
 
-    if score < 0.05:
+    if pd.isna(score):
+        return "Unknown"
+
+    if score >= 0.30:
         return "Green"
 
-    if score < 0.10:
+    if score >= 0.10:
         return "Moderate"
 
     return "Critical"
 
 
-def build_gold():
+def build_gold(base_dir=None) -> pd.DataFrame:
+    """Construye Gold y KPIs. El warehouse se carga en la tarea de Load."""
 
-    print("Construyendo capa Gold...")
+    df = pd.read_csv(silver_dir(base_dir) / "silver_green_data.csv")
 
-    df = pd.read_csv(SILVER_FILE)
-
-    # ==================================
-    # KPI DERIVADO
-    # ==================================
-
-    df["Emission_Efficiency"] = (
-        df["Energy_Consumption"]
-        /
-        (df["Renewable_Energy"] + 1)
+    df["Energy_per_Renewable_Unit"] = (
+        df["Energy_Consumption"] / (df["Renewable_Energy"] + 1)
     )
 
-    # ==================================
-    # CLASIFICACIÓN
-    # ==================================
+    # Consumo 0 => proporción indefinida (NaN), nunca inf.
+    consumption = df["Energy_Consumption"].replace(0, np.nan)
+    df["Renewable_Share"] = df["Renewable_Energy"] / consumption
+    df["Environmental_Status"] = df["Renewable_Share"].apply(classify_environment)
 
-    df["Environmental_Status"] = (
-        df["Renewable_Energy"]
-        /
-        df["Energy_Consumption"]
-    )
+    gold_out = gold_dir(base_dir)
+    gold_out.mkdir(parents=True, exist_ok=True)
+    df.to_csv(gold_out / "gold_final.csv", index=False)
 
-    df["Environmental_Status"] = (
-        df["Environmental_Status"]
-        .apply(classify_environment)
-    )
-
-    # ==================================
-    # CREAR FOLDERS
-    # ==================================
-
-    Path("data/gold").mkdir(
-        parents=True,
-        exist_ok=True
-    )
-
-    Path("reports").mkdir(
-        parents=True,
-        exist_ok=True
-    )
-
-    Path("warehouse").mkdir(
-        parents=True,
-        exist_ok=True
-    )
-
-    # ==================================
-    # GUARDAR GOLD
-    # ==================================
-
-    df.to_csv(
-        GOLD_FILE,
-        index=False
-    )
-
-    # ==================================
-    # KPIs
-    # ==================================
-
+    status = df["Environmental_Status"]
     kpis = pd.DataFrame(
         {
             "KPI": [
@@ -111,67 +60,26 @@ def build_gold():
                 "Max Energy Consumption",
                 "Min Energy Consumption",
                 "Green Countries",
-                "Critical Countries"
+                "Critical Countries",
             ],
             "Value": [
-                len(df),
-                round(
-                    df["Energy_Consumption"]
-                    .mean(),
-                    2
-                ),
-                round(
-                    df["Renewable_Energy"]
-                    .mean(),
-                    2
-                ),
-                df["Energy_Consumption"]
-                .max(),
-                df["Energy_Consumption"]
-                .min(),
-                len(
-                    df[
-                        df[
-                            "Environmental_Status"
-                        ] == "Green"
-                    ]
-                ),
-                len(
-                    df[
-                        df[
-                            "Environmental_Status"
-                        ] == "Critical"
-                    ]
-                )
-            ]
+                float(len(df)),
+                round(float(df["Energy_Consumption"].mean()), 2),
+                round(float(df["Renewable_Energy"].mean()), 2),
+                float(df["Energy_Consumption"].max()),
+                float(df["Energy_Consumption"].min()),
+                float((status == "Green").sum()),
+                float((status == "Critical").sum()),
+            ],
         }
     )
 
-    kpis.to_csv(
-        KPI_FILE,
-        index=False
-    )
-
-    # ==================================
-    # WAREHOUSE
-    # ==================================
-
-    df.to_csv(
-        WAREHOUSE_FILE,
-        index=False
-    )
-
-    print("Gold generado correctamente")
-
-    print(df.shape)
-
-    print("\nKPIs:")
-
-    print(kpis)
+    reports_out = reports_dir(base_dir)
+    reports_out.mkdir(parents=True, exist_ok=True)
+    kpis.to_csv(reports_out / "kpis.csv", index=False)
 
     return df
 
 
 if __name__ == "__main__":
-
-    build_gold()
+    print(build_gold())

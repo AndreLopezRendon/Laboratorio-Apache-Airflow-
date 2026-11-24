@@ -1,6 +1,21 @@
-Country,Energy_Consumption,Renewable_Energy
-Colombia,250,35
-Brazil,500,45
-Germany,700,38
-United States,1200,20
-India,900,18
+Country,Country_Code,Energy_Consumption,Renewable_Energy
+Colombia,COL,250,35
+Brazil,BRA,500,45
+Germany,DEU,700,38
+United States,USA,1200,20
+India,IND,900,18
+Argentina,ARG,300,27
+Chile,CHL,180,60
+Mexico,MEX,420,30
+Peru,PER,120,44
+Uruguay,URY,40,30
+Canada,CAN,800,200
+France,FRA,650,90
+Spain,ESP,350,110
+Norway,NOR,220,200
+China,CHN,3000,300
+Japan,JPN,850,60
+Australia,AUS,400,55
+South Africa,ZAF,260,8
+Egypt,EGY,210,6
+Kenya,KEN,25,18

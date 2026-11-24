@@ -7,6 +7,7 @@ Python: 3.12
 """
 
 from pathlib import Path
+
 import requests
 import pandas as pd
 
